@@ -1,0 +1,60 @@
+[
+    {
+        "id": "issue-001",
+        "title": "SyntaxError in Python Script",
+        "tag": "pending",
+        "language": "python",
+        "desc": "Running the script results in a SyntaxError due to a missing colon in an if-statement.",
+        "snippet": "if x == 10\n    print('X is 10')",
+        "solution-desc": "",
+        "solution-snippet": "",
+        "time-taken": ""
+    },
+    {
+        "id": "issue-002",
+        "title": "Undefined Variable in JavaScript",
+        "tag": "ignored",
+        "language": "js",
+        "desc": "ReferenceError: 'myVar' is not defined. Occurs when trying to use 'myVar' before declaration.",
+        "snippet": "console.log(myVar);",
+        "solution-desc": "",
+        "solution-snippet": "",
+        "time-taken": ""
+    },
+    {
+        "id": "issue-003",
+        "title": "Bash Script Fails with 'Command Not Found'",
+        "tag": "pending",
+        "language": "bash",
+        "desc": "A command inside the script isn't recognized. It could be due to a missing package or incorrect path.",
+        "snippet": "mycommand --option",
+        "solution-desc": "",
+        "solution-snippet": "",
+        "time-taken": ""
+    },
+    {
+        "id": "issue-004",
+        "title": "Permission Denied Error in Bash",
+        "tag": "solved",
+        "language": "bash",
+        "desc": "Script execution fails with 'Permission denied'. The script lacks execution permissions.",
+        "snippet": "./myscript.sh",
+        "solution-desc": "Resolved by making the script executable using chmod.",
+        "solution-snippet": "chmod +x myscript.sh",
+        "time-taken": "5 minutes"
+    },
+    {
+        "id": "issue-005",
+        "title": "Incorrect JSON Parsing in Python",
+        "tag": "solved",
+        "language": "python",
+        "desc": "The JSON parser fails when reading a file with single quotes instead of double quotes.",
+        "snippet": "import json\njson.loads(\"{'key': 'value'}\")",
+        "solution-desc": "Replaced single quotes with double quotes in JSON string.",
+        "solution-snippet": "json.loads('{\"key\": \"value\"}')",
+        "time-taken": "10 minutes"
+    }
+]
+
+
+
