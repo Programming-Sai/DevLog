@@ -64,5 +64,16 @@
         "solution-desc": "Changed to regular def views and wrapped async calls with async_to_sync().",
         "solution-snippet": "def search_view(request):\\n    result = async_to_sync(engine.regular_search)(query)\\n    return JsonResponse(...)",
         "time-taken": "40m"
+    },
+    {
+        "id": "011",
+        "title": "Test Problem",
+        "tag": "solved",
+        "language": "python",
+        "desc": "async def views with ratelimit caused unawaited coroutine under WSGI, Django expected sync views.",
+        "snippet": "async def search_view(request):\\n    result = await engine.regular_search(...)",
+        "solution-desc": "Changed to regular def views and wrapped async calls with async_to_sync().",
+        "solution-snippet": "def search_view(request):\\n    result = async_to_sync(engine.regular_search)(query)\\n    return JsonResponse(...)",
+        "time-taken": "40m"
     }
 ]
