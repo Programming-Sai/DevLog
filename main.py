@@ -78,7 +78,7 @@ Tip: Start by running 'devlog --init' OR 'devlog -i' to create your tracker.
 
 		self.subparsers = self.add_subparsers(dest="command", required=False, parser_class=ArgumentParser)
 		self.problems = self.load_issues()
-		self.add_arguments()
+		self.add_arguments() 
 		self.process_args()
 
 
