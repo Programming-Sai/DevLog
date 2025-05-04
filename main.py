@@ -1,5 +1,6 @@
 from argparse import *
 import json
+import re
 
 
 # Issue Structure
@@ -151,37 +152,54 @@ Tip: Start by running 'devlog --init' to create your tracker.
 		 with open(self.tracker_file, 'w') as j:
 				json.dump(update, j, indent=4)
 
+	def sluggifed_title(self, title):
+		return  re.sub(r'[^\w\s-]', '', title).strip().lower().replace(' ', '-')
+
 	def create_md(self):
-		lines = ["# Problem Tracker\n\n## Table of Contents\n"]
+		tag_emojis = {
+			'solved': '✅',
+			'pending': '⏳',
+			'ignored': '🚫'
+		}
+		lines = ["# Problem Tracker", "<br><br>", "\n## 📋 Table of Contents", "<br>"]
     
 		# Add table of contents
 		for problem in self.problems:
-			lines.append(f"- [{problem['title']}](#{problem['id']})\n")
+			lines.append(f"\n- [{problem['title']}](#🆔-{problem['id']}---{self.sluggifed_title(problem['title'])})\n")
 		
-		lines.append('\n---\n---\n---\n---\n')
+		lines.append('\n---\n')
 
 		for problem in self.problems:
 				lines.append('\n---\n')
-				lines.append(f'#### {problem['id']}\n')
-				lines.append(f'`{problem['tag']}`\n')
-				lines.append(f'## {problem['title']}\n')
-				lines.append(f'{problem['desc']}\n')
+
+				lines.append(f'### 🆔 {problem['id']} - {problem['title']}\n')
+				lines.append("<br>")
+				lines.append(f"**Status:** {tag_emojis[problem['tag']]} {problem['tag'].capitalize()}\n")
+				lines.append(f"\n**Language:** {problem['language'].capitalize()}\n")
+				lines.append(f"\n**Time Taken:** {problem['time-taken']}\n")
+				lines.append(f"\n### 🐞 Problem Description")
+				lines.append("<br>")
+				lines.append(f'\n{problem['desc']}\n')
 				lines.append(f'''
 ```{problem['language']}
 {problem['snippet']}
 ```
 				''' if problem['snippet'] else '')
-				lines.append('\n<br><br>\n')
-				lines.append(f'{problem['solution-desc']}\n')
-				lines.append(f'''
+				# lines.append('<br><br>')
+				if problem['solution-desc']:
+					lines.append(f"\n### ✅ Solution Description")
+					lines.append("\n<br>")
+					lines.append(f'\n{problem['solution-desc']}\n')
+					lines.append(f'''
 ```{problem['language']}
 {problem['solution-snippet']}
 ```
 				''' if problem['solution-snippet'] else '')
-				lines.append(f"\n{problem['time-taken']}\n")
-				lines.append('\n---\n')
+				lines.append("\n<br>\n")
+				lines.append("<br>\n")
+
 			
-		with open(self.result_file, 'w') as m:
+		with open(self.result_file, 'w', encoding="utf-8") as m:
 			m.writelines(lines)
 
 	def delete_problem(self, id):
