@@ -1,5 +1,6 @@
 from argparse import *
 import json
+import re
 
 
 # Issue Structure
@@ -15,7 +16,7 @@ import json
 	'time-taken-to-solution': ''
 },
 '''
-
+   
 
 class pb(ArgumentParser):
 	def __init__(self):
@@ -29,20 +30,24 @@ Usage:
   devlog <command> [options]
 
 Commands:
-  --init             Initialize a new issue tracker.
-  --id <id>          Specify an issue ID (used with other options).
-  --title <title>    Set the title of an issue.
-  --tag <status>     Set issue status (solved | pending | ignored).
-  --language <lang>  Specify the programming language related to the issue.
-  --desc <text>      Add a description of the issue.
-  --snippet <code>   Include a code snippet demonstrating the issue.
-  --solution-desc    Provide a description of the solution.
-  --solution-snippet Include a code snippet of the solution.
-  --time-taken       Log the time taken to solve the issue.
-  --delete <id>      Delete an issue by ID.
-  --list             Display all tracked issues with IDs and titles.
-  --compile          Generate a Markdown report of all issues.
-  --clear              Permanently delete all stored issues (Irreversible!).
+  -i,  --init               Initialize a new issue tracker.
+  -id, --id <id>            Set issue ID.
+  -t,  --title <title>      Set issue title.
+  -g,  --tag <status>       Set issue status (solved | pending | ignored).
+  -l,  --language <lang>    Set the programming language.
+  -d,  --desc <text>        Describe the issue.
+  -s,  --snippet <code>     Code snippet for the issue.
+  -sd, --solution-desc      Describe the solution.
+  -ss, --solution-snippet   Code snippet for the solution.
+  -tt, --time-taken         Time spent solving the issue.
+
+  -c,  --compile            Generate markdown report.
+       --file <name>        (Optional) Output file (default: PROBLEMS.md).
+       --reverse            (Optional) Compile in reverse order (latest first).
+
+  -del, --delete <id>        Delete an issue by ID.
+  -clr,--clear              Permanently delete all issues.
+  -ls, --list               Display all tracked issues.
 
 
 Examples:
@@ -54,7 +59,19 @@ Examples:
   devlog --clear
   devlog --compile
 
-Tip: Start by running 'devlog --init' to create your tracker.
+OR
+
+Examples:
+  devlog -i
+  devlog -id 101 -t "Fix login bug" -d "Login fails on mobile"
+  devlog -id 101 -g solved -sd "Fixed API endpoint"
+  devlog -ls
+  devlog -del 101
+  devlog -clr
+  devlog -c --file my_log.md --reverse
+
+
+Tip: Start by running 'devlog --init' OR 'devlog -i' to create your tracker.
 
 🚀 Happy Coding!
 """
@@ -66,26 +83,25 @@ Tip: Start by running 'devlog --init' to create your tracker.
 
 
 	def add_arguments(self):
-		self.add_argument('--init', action='store_true', help="Initialize a new issue tracker.")
+		self.add_argument('-i', '--init', action='store_true', help="Initialize a new issue tracker.")
 
-		self.add_argument('--id', type=str, help="Unique identifier for the issue.")
-		self.add_argument('--title', type=str, help="Title of the issue.")
-		self.add_argument('--tag', type=str, help="Status of the issue (solved | pending | ignored).")
-		self.add_argument('--language', type=str, help="Programming language related to the issue.")
-		self.add_argument('--desc', type=str, help="Detailed description of the issue.")
-		self.add_argument('--snippet', type=str, help="Code snippet demonstrating the issue.")
-		self.add_argument('--solution-desc', type=str, help="Explanation of the solution.")
-		self.add_argument('--solution-snippet', type=str, help="Code snippet for the solution.")
-		self.add_argument('--time-taken', type=str, help="Time taken to find the solution.")
+		self.add_argument('-id', '--id', type=str, help="Unique identifier for the issue.")
+		self.add_argument('-t', '--title', type=str, help="Title of the issue.")
+		self.add_argument('-g', '--tag', type=str, help="Status of the issue (solved | pending | ignored).")
+		self.add_argument('-l', '--language', type=str, help="Programming language related to the issue.")
+		self.add_argument('-d', '--desc', type=str, help="Detailed description of the issue.")
+		self.add_argument('-s', '--snippet', type=str, help="Code snippet demonstrating the issue.")
+		self.add_argument('-sd', '--solution-desc', type=str, help="Explanation of the solution.")
+		self.add_argument('-ss', '--solution-snippet', type=str, help="Code snippet for the solution.")
+		self.add_argument('-tt', '--time-taken', type=str, help="Time taken to find the solution.")
 
-		self.add_argument('--compile', action='store_true', help="Generate a detailed Markdown report of all logged issues, including descriptions, code snippets, and solutions.")
-
-		self.add_argument('--delete', type=str, help="Delete a specific issue from the tracker by providing its unique ID.")
-
-		self.add_argument('--clear', action='store_true', help="Permanently remove all stored issues from the tracker. Use with caution!")
-
-		self.add_argument('--list', action='store_true', help="Display a summary of all tracked issues, showing their IDs, titles, and status.")
-
+		self.add_argument('-c', '--compile', action='store_true', help="Generate a detailed Markdown report of all logged issues.")
+		self.add_argument('-f', '--file', type=str, help="Specify output markdown file (default is PROBLEMS.md).")
+		self.add_argument('-r', '--reverse', action='store_true', help="Reverse the order of compilation (latest entries first).")
+		
+		self.add_argument('-del', '--delete', type=str, help="Delete a specific issue by ID.")
+		self.add_argument('-clr', '--clear', action='store_true', help="Permanently remove all stored issues.")
+		self.add_argument('-ls', '--list', action='store_true', help="Display a summary of all tracked issues.")
 
 
 	
@@ -101,7 +117,9 @@ Tip: Start by running 'devlog --init' to create your tracker.
 			self.update_issues(self.problems)
 			print(f"{'Problem '+args.id+' Has been updated' if status else 'Problem '+args.id+' Has been created'}")
 		elif args.compile:
-			self.create_md()
+			file_name = args.file if args.file else self.result_file
+			reverse = args.reverse
+			self.create_md(file_name, reverse)
 		elif args.delete:
 			self.delete_problem(args.delete)
 		elif args.clear:
@@ -151,37 +169,54 @@ Tip: Start by running 'devlog --init' to create your tracker.
 		 with open(self.tracker_file, 'w') as j:
 				json.dump(update, j, indent=4)
 
-	def create_md(self):
-		lines = ["# Problem Tracker\n\n## Table of Contents\n"]
-    
-		# Add table of contents
-		for problem in self.problems:
-			lines.append(f"- [{problem['title']}](#{problem['id']})\n")
-		
-		lines.append('\n---\n---\n---\n---\n')
+	def sluggifed_title(self, title):
+		return  re.sub(r'[^\w\s-]', '', title).strip().lower().replace(' ', '-')
 
-		for problem in self.problems:
+	def create_md(self, file_name, reverse):
+		tag_emojis = {
+			'solved': '✅',
+			'pending': '⏳',
+			'ignored': '🚫'
+		}
+		lines = ["# Problem Tracker", "<br><br>", "\n## 📋 Table of Contents", "<br>"]
+		problem_items = self.problems[::-1] if reverse else self.problems
+		# Add table of contents
+		for problem in problem_items:
+			lines.append(f"\n- [{problem['title']}](#🆔-{problem['id']}---{self.sluggifed_title(problem['title'])})\n")
+		
+		lines.append('\n---\n')
+
+		for problem in problem_items:
 				lines.append('\n---\n')
-				lines.append(f'#### {problem['id']}\n')
-				lines.append(f'`{problem['tag']}`\n')
-				lines.append(f'## {problem['title']}\n')
-				lines.append(f'{problem['desc']}\n')
+
+				lines.append(f'### 🆔 {problem['id']} - {problem['title']}\n')
+				lines.append("<br>")
+				lines.append(f"**Status:** {tag_emojis[problem['tag']]} {problem['tag'].capitalize()}\n")
+				lines.append(f"\n**Language:** {problem['language'].capitalize()}\n")
+				lines.append(f"\n**Time Taken:** {problem['time-taken']}\n")
+				lines.append(f"\n### 🐞 Problem Description")
+				lines.append("<br>")
+				lines.append(f'\n{problem['desc']}\n')
 				lines.append(f'''
 ```{problem['language']}
 {problem['snippet']}
 ```
 				''' if problem['snippet'] else '')
-				lines.append('\n<br><br>\n')
-				lines.append(f'{problem['solution-desc']}\n')
-				lines.append(f'''
+				# lines.append('<br><br>')
+				if problem['solution-desc']:
+					lines.append(f"\n### ✅ Solution Description")
+					lines.append("\n<br>")
+					lines.append(f'\n{problem['solution-desc']}\n')
+					lines.append(f'''
 ```{problem['language']}
 {problem['solution-snippet']}
 ```
 				''' if problem['solution-snippet'] else '')
-				lines.append(f"\n{problem['time-taken']}\n")
-				lines.append('\n---\n')
+				lines.append("\n<br>\n")
+				lines.append("<br>\n")
+
 			
-		with open(self.result_file, 'w') as m:
+		with open(file_name, 'w', encoding="utf-8") as m:
 			m.writelines(lines)
 
 	def delete_problem(self, id):
